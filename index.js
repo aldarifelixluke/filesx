@@ -95,7 +95,7 @@ app.get('/', async (req, res) => {
             if (match && match[1]) {
               response.status = true;
               response.message = 'Data retrieved successfully';
-              response.result.very_sarcastic = match[1].trim(); // Directly assign the roast
+              response.result = match[1].trim(); // Directly assign the roast
               res.status(200).json(response);
             } else {
               response.message = 'Failed to extract roasting text.';
