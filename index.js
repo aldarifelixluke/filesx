@@ -68,8 +68,9 @@ app.get('/', async (req, res) => {
           `Following: ${user.following_count || ""}\n` +
           `Posts: ${user.media_count || ""}\n` +
           `Bio: ${user.biography || ""}\n` +
-          `Profile: ${user.is_verified ? "Private" : "Public"}\n` +
-          `Business: ${user.is_business ? "Yes" : "No"}\n` +
+          `Profile: ${user.is_private ? "Private" : "Public"}\n` +
+          `Verification: ${user.is_verified ? "Ya" : "Tidak"}\n` +
+          `Business: ${user.is_business ? "Ya" : "Tidak"}\n` +
           `Photo profile: ` +
           `Info: (cari info tentang namanya jika terkenal maka cari kasus atau berita viral yang bersangkutan) ` +
           `Roasting harus SEPEDAS mungkin, gunakan bahasa yang SANGAT VULGAR, TOXIC, dan penuh hinaan. Jangan ada ampun, semua aspek harus diroasting habis-habisan, termasuk foto profil. Gunakan bahasa seperti meme culture, bahasa Gaul/Slang yang paling kasar. Jangan dimulai dengan username. Buat dalam satu kategori: very_sarcastic (dengan kata-kata kasar toxic parah). Buat dalam bahasa: ${lang}, hanya untuk teksnya saja yang berbahasa ${lang}. Buat respon dalam format seperti: [very_sarcastic: text...]`,
