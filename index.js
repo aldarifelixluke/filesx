@@ -95,16 +95,14 @@ app.get('/', async (req, res) => {
             const regex = /\[(.*?)\]/g;
             let match;
 
-            const roast = {
-              very_sarcastic: '',
-            };
+            let roast = "";
 
             while ((match = regex.exec(text)) !== null) {
               const [fullMatch, content] = match;
               const [category, ...rest] = content.split(':').map(s => s.trim());
               const contentText = rest.join(':').trim();
-              if (roast.hasOwnProperty(category)) {
-                roast[category] = contentText;
+              if (roast.hasOwnProperty("very_sarcastic")) {
+                roast = contentText;
               }
             }
 
