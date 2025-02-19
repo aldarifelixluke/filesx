@@ -84,24 +84,30 @@ app.get('/', async (req, res) => {
           axios.get(`${url}?${params.toString()}`)
         ]);
 
-        if (kaizResponse.status === 200) {
-          const resFromKaiz = kaizResponse.data;
+        if (resFromKaiz.response) {
+  const text = resFromKaiz.response;
+  console.log("Original text:", text); // Log the original text
+  const regex = /\[very_sarcastic:(.*?)\]/i;
+  const match = text.match(regex);
 
-          if (resFromKaiz.response) {
-            const text = resFromKaiz.response;
-            const regex = /\[very_sarcastic:(.*?)\]/i; // Changed regex
-            const match = text.match(regex);
+  if (match && match[1]) {
+    let extractedText = match[1];
+    console.log("Extracted text (before trim):", extractedText); // Log before trim
+    extractedText = extractedText.trim();
+    console.log("Extracted text (after trim):", extractedText); // Log after trim
 
-            if (match && match[1]) {
-              response.status = true;
-              response.message = 'Data retrieved successfully';
-              response.result = match[1].trim().replace(/\s+/g, ' '); // Directly assign the roast
-              res.status(200).json(response);
-            } else {
-              response.message = 'Failed to extract roasting text.';
-              console.error('No roasting text found in response:', text);
-              res.status(422).json(response);
-            }
+    let words = extractedText.split(/\s+/);
+    extractedText = words.join(' ');
+    response.status = true;
+    response.message = 'Data retrieved successfully';
+    response.result = extractedText;
+    res.status(200).json(response);
+  } else {
+    response.message = 'Failed to extract roasting text.';
+    console.error('No roasting text found in response:', text);
+    res.status(422).json(response);
+  }
+
 
           } else {
             response.message = 'Failed to get a response from the API.';
