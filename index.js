@@ -1,6 +1,6 @@
 const express = require('express');
 const axios = require('axios');
-const { URLSearchParams } = require('url'); // Import URLSearchParams correctly
+const { URLSearchParams } = require('url');
 
 const app = express();
 const port = 3000;
@@ -48,7 +48,7 @@ app.get('/', async (req, res) => {
     status: false,
     author: 'Sli',
     message: 'Username parameter not found.',
-    result: '' // Initialize result to null
+    
   };
 
   if (!username) {
@@ -84,35 +84,39 @@ app.get('/', async (req, res) => {
           axios.get(`${url}?${params.toString()}`)
         ]);
 
-        // **Penting:  Gunakan kaizResponse[0] untuk mengakses hasil pertama (dan satu-satunya) dari Promise.all**
-        if (kaizResponse[0] && kaizResponse[0].data) {  // Periksa ada data di response
-          const resFromKaiz = kaizResponse[0].data; // Simpan response dari kaizResponse
+        if (resFromKaiz.response) {
+  const text = resFromKaiz.response;
+  console.log("Original text:", text); // Log the original text
+  const regex = /\[very_sarcastic:(.*?)\]/i;
+  const match = text.match(regex);
 
-          if (resFromKaiz && resFromKaiz.response) { // Periksa resFromKaiz dan resFromKaiz.response
-            const text = resFromKaiz.response;
-            console.log("Original text:", text);
-            const regex = /\[very_sarcastic:(.*?)\]/i;
-            const match = text.match(regex);
+  if (match && match[1]) {
+    let extractedText = match[1];
+    console.log("Extracted text (before trim):", extractedText); // Log before trim
+    extractedText = extractedText.trim();
+    console.log("Extracted text (after trim):", extractedText); // Log after trim
 
-            if (match && match[1]) {
-              let extractedText = match[1].trim().replace(/\s+/g, ' '); // Gabungkan trim dan replace
-              response.status = true;
-              response.message = 'Data retrieved successfully';
-              response.result = extractedText;
-              res.status(200).json(response);
-            } else {
-              response.message = 'Failed to extract roasting text.';
-              console.error('No roasting text found in response:', text);
-              res.status(422).json(response);
-            }
+    let words = extractedText.split(/\s+/);
+    extractedText = words.join(' ');
+    response.status = true;
+    response.message = 'Data retrieved successfully';
+    response.result = extractedText;
+    res.status(200).json(response);
+  } else {
+    response.message = 'Failed to extract roasting text.';
+    console.error('No roasting text found in response:', text);
+    res.status(422).json(response);
+  }
+
+
           } else {
             response.message = 'Failed to get a response from the API.';
-            console.error('API response error:', resFromKaiz); // Log the response
+            console.error('API response error:', resFromKaiz);
             res.status(422).json(response);
           }
         } else {
           response.message = 'Failed to connect to the API.';
-          console.error('API HTTP error or no data:', kaizResponse);  // Lebih informatif
+          console.error('API HTTP error:', kaizResponse.status, kaizResponse.statusText);
           res.status(500).json(response);
         }
       } catch (kaizError) {
