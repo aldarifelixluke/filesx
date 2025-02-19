@@ -86,30 +86,25 @@ app.get('/', async (req, res) => {
           axios.get(`${url}?${params.toString()}`)
         ]);
 
-
         if (kaizResponse.status === 200) {
           const resFromKaiz = kaizResponse.data;
 
           if (resFromKaiz.response) {
             const text = resFromKaiz.response;
-            const regex = /\[(.*?)\]/g;
-            let match;
+            const regex = /\[very_sarcastic:(.*?)\]/i; // Changed regex
+            const match = text.match(regex);
 
-            let roast = "";
-
-            while ((match = regex.exec(text)) !== null) {
-              const [fullMatch, content] = match;
-              const [category, ...rest] = content.split(':').map(s => s.trim());
-              const contentText = rest.join(':').trim();
-              if (roast.hasOwnProperty("very_sarcastic")) {
-                roast = contentText;
-              }
+            if (match && match[1]) {
+              response.status = true;
+              response.message = 'Data retrieved successfully';
+              response.result.very_sarcastic = match[1].trim(); // Directly assign the roast
+              res.status(200).json(response);
+            } else {
+              response.message = 'Failed to extract roasting text.';
+              console.error('No roasting text found in response:', text);
+              res.status(422).json(response);
             }
 
-            response.status = true;
-            response.message = 'Data retrieved successfully';
-            response.result = roast.very_sarcastic;
-            res.status(200).json(response); // Menggunakan JSON spaces yang sudah di-set
           } else {
             response.message = 'Failed to get a response from the API.';
             console.error('API response error:', resFromKaiz);
