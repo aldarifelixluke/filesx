@@ -48,9 +48,7 @@ app.get('/', async (req, res) => {
     status: false,
     author: 'Sli',
     message: 'Username parameter not found.',
-    result: {
-      very_sarcastic: '',
-    },
+    
   };
 
   if (!username) {
