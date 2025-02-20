@@ -84,7 +84,7 @@ app.get('/', async (req, res) => {
 
           if (resFromKaiz.response) {
             const text = resFromKaiz.response;
-            const regex = /\[very_supportive:(.*?)\]/i; 
+            const regex = /\[very_sarcastic:(.*?)\]/i; 
             const match = text.match(regex);
 
             if (match && match[1]) {
