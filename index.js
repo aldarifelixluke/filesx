@@ -4,7 +4,6 @@ const { URLSearchParams } = require('url');
 
 const app = express();
 const port = 3000;
-
 app.use(express.json());
 app.set('json spaces', 2); 
 
@@ -59,17 +58,17 @@ app.get('/', async (req, res) => {
       const url = "https://kaiz-apis.gleeze.com/api/gemini-vision";
       const data = {
         q: `Buat roasting yang SANGAT KASAR dan AGRESIF untuk user @${user.username || ""} berdasarkan data berikut:\n` +
-          `Full name: ${user.full_name || ""}\n` +
-          `Followers: ${user.follower_count || ""}\n` +
-          `Following: ${user.following_count || ""}\n` +
-          `Posts: ${user.media_count || ""}\n` +
-          `Bio: ${user.biography || ""}\n` +
-          `Profile: ${user.is_private ? "Private" : "Public"}\n` +
-          `Verification: ${user.is_verified ? "Ya" : "Tidak"}\n` +
-          `Business: ${user.is_business ? "Ya" : "Tidak"}\n` +
-          `Photo profile: ` +
-          `Info: (cari info tentang namanya jika terkenal maka cari kasus atau berita viral yang bersangkutan) ` +
-          `Roasting harus SEPEDAS mungkin, gunakan bahasa yang SANGAT VULGAR, TOXIC, dan penuh hinaan. Jangan ada ampun, semua aspek harus diroasting habis-habisan, termasuk foto profil. Gunakan bahasa seperti meme culture, bahasa Gaul/Slang yang paling kasar. Jangan dimulai dengan username. Buat dalam satu kategori: very_sarcastic (dengan kata-kata kasar toxic parah). Buat dalam bahasa: ${lang}, hanya untuk teksnya saja yang berbahasa ${lang}. Buat respon dalam format seperti: [very_sarcastic: text...]`,
+        `Full name: ${user.full_name || ""}\n` +
+        `Followers: ${user.follower_count || ""}\n` +
+        `Following: ${user.following_count || ""}\n` +
+        `Posts: ${user.media_count || ""}\n` +
+        `Bio: ${user.biography || ""}\n` +
+        `Profile: ${user.is_private ? "Private": "Public"}\n` +
+        `Verification: ${user.is_verified ? "Ya": "Tidak"}\n` +
+        `Business: ${user.is_business ? "Ya": "Tidak"}\n` +
+        `Photo profile: ` +
+        `Info: (cari info tentang namanya jika terkenal maka cari kasus atau berita viral yang bersangkutan) ` +
+        `Roasting harus SEPEDAS mungkin, gunakan bahasa yang SANGAT VULGAR, TOXIC, dan penuh hinaan. Jangan ada ampun, semua aspek harus diroasting habis-habisan, termasuk foto profil. Gunakan bahasa seperti meme culture, bahasa Gaul/Slang yang paling kasar. Jangan dimulai dengan username. Buat dalam satu kategori: very_sarcastic (dengan kata-kata kasar toxic parah). Buat dalam bahasa: ${lang}, hanya untuk teksnya saja yang berbahasa ${lang}. Buat respon dalam format seperti: [very_sarcastic: text...]`,
         uid: Math.random().toString(36).substring(2, 7),
         imageUrl: user.profile_pic_url_hd || ""
       };
@@ -85,7 +84,7 @@ app.get('/', async (req, res) => {
 
           if (resFromKaiz.response) {
             const text = resFromKaiz.response;
-            const regex = /\[very_sarcastic:(.*?)\]/i; 
+            const regex = /\[very_supportive:(.*?)\]/i; 
             const match = text.match(regex);
 
             if (match && match[1]) {
@@ -94,8 +93,8 @@ app.get('/', async (req, res) => {
               response.result = match[1].trim().replace(/\s+/g, ' ');
               res.status(200).json(response);
             } else {
-              response.message = 'Failed to extract roasting text.';
-              console.error('No roasting text found in response:', text);
+              response.message = 'Failed to extract Roastig text.';
+              console.error('No Roastig text found in response:', text);
               res.status(422).json(response);
             }
 
@@ -130,4 +129,4 @@ app.get('/', async (req, res) => {
 
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
-});
+})
