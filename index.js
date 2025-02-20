@@ -1,15 +1,18 @@
 const express = require('express');
 const axios = require('axios');
 const { URLSearchParams } = require('url');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const port = 3000;
+const cacheDir = './cache/';
 
 // Middleware to parse JSON request bodies
 app.use(express.json());
 
 // Set JSON spaces for prettier formatting
-app.set('json spaces', 2); // Added this line
+app.set('json spaces', 2);
 
 // Function to get Instagram profile data
 async function getInstagramProfile(username) {
@@ -19,7 +22,6 @@ async function getInstagramProfile(username) {
 
   try {
     const response = await axios.get(apiUrl);
-
     if (response.status === 200) {
       const data = response.data;
 
@@ -40,15 +42,38 @@ async function getInstagramProfile(username) {
   }
 }
 
+// Function to manage caching
+const manageCache = (username, data) => {
+  const filePath = path.join(cacheDir, `${username}.json`);
+
+  // Check if cache file exists
+  if (fs.existsSync(filePath)) {
+    // If exists, read and return the cached data
+    const cachedData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    return { fromCache: true, data: cachedData };
+  }
+
+  // If not exists, create new cache file
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+
+  // Schedule to delete the file after 5 seconds
+  setTimeout(() => {
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log(`Cache file ${filePath} has been deleted.`);
+    }
+  }, 5000);
+
+  return { fromCache: false, data: data };
+};
+
 app.get('/', async (req, res) => {
   const username = req.query.username;
   const lang = req.query.lang || "id";
-
   const response = {
     status: false,
     author: 'Sli',
     message: 'Username parameter not found.'
-    
   };
 
   if (!username) {
@@ -78,9 +103,12 @@ app.get('/', async (req, res) => {
         imageUrl: user.profile_pic_url_hd || ""
       };
 
+      // Manage cache
+      const cacheResponse = manageCache(username, data);
+
+      // Use Kaiz API with caching logic
       try {
-        const params = new URLSearchParams(data);
-        // Jalankan kedua panggilan API secara bersamaan untuk mengurangi waktu tunggu.
+        const params = new URLSearchParams(cacheResponse.data);
         const [kaizResponse] = await Promise.all([
           axios.get(`${url}?${params.toString()}`)
         ]);
@@ -90,7 +118,7 @@ app.get('/', async (req, res) => {
 
           if (resFromKaiz.response) {
             const text = resFromKaiz.response;
-            const regex = /\[very_sarcastic:(.*?)\]/i; // Changed regex
+            const regex = /\[very_sarcastic:(.*?)\]/i;
             const match = text.match(regex);
 
             if (match && match[1]) {
@@ -103,7 +131,6 @@ app.get('/', async (req, res) => {
               console.error('No roasting text found in response:', text);
               res.status(422).json(response);
             }
-
           } else {
             response.message = 'Failed to get a response from the API.';
             console.error('API response error:', resFromKaiz);
@@ -136,3 +163,8 @@ app.get('/', async (req, res) => {
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
 });
+
+// Ensure cache directory exists
+if (!fs.existsSync(cacheDir)) {
+  fs.mkdirSync(cacheDir);
+}
