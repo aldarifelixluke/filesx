@@ -6,13 +6,18 @@ const path = require('path');
 
 const app = express();
 const port = 3000;
-const cacheDir = './cache/';
+const cacheDir = 'cache';
 
 // Middleware to parse JSON request bodies
 app.use(express.json());
 
 // Set JSON spaces for prettier formatting
 app.set('json spaces', 2);
+
+// Ensure cache directory exists
+if (!fs.existsSync(cacheDir)) {
+  fs.mkdirSync(cacheDir);
+}
 
 // Function to get Instagram profile data
 async function getInstagramProfile(username) {
@@ -42,31 +47,6 @@ async function getInstagramProfile(username) {
   }
 }
 
-// Function to manage caching
-const manageCache = (username, data) => {
-  const filePath = path.join(cacheDir, `${username}.json`);
-
-  // Check if cache file exists
-  if (fs.existsSync(filePath)) {
-    // If exists, read and return the cached data
-    const cachedData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    return { fromCache: true, data: cachedData };
-  }
-
-  // If not exists, create new cache file
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-
-  // Schedule to delete the file after 5 seconds
-  setTimeout(() => {
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-      console.log(`Cache file ${filePath} has been deleted.`);
-    }
-  }, 5000);
-
-  return { fromCache: false, data: data };
-};
-
 app.get('/', async (req, res) => {
   const username = req.query.username;
   const lang = req.query.lang || "id";
@@ -79,6 +59,18 @@ app.get('/', async (req, res) => {
   if (!username) {
     res.status(404).json(response);
     return;
+  }
+
+  const cacheFilePath = path.join(cacheDir, `${username}.txt`);
+
+  // Check if cache file exists
+  if (fs.existsSync(cacheFilePath)) {
+    // If exists, read and return the cached data
+    const cachedData = fs.readFileSync(cacheFilePath, 'utf8');
+    response.status = true;
+    response.message = 'Data retrieved from cache.';
+    response.result = cachedData.trim();  // Trim any extra whitespace
+    return res.status(200).json(response);
   }
 
   try {
@@ -103,15 +95,10 @@ app.get('/', async (req, res) => {
         imageUrl: user.profile_pic_url_hd || ""
       };
 
-      // Manage cache
-      const cacheResponse = manageCache(username, data);
-
-      // Use Kaiz API with caching logic
+      // Prepare and send request to Gleeze API
+      const params = new URLSearchParams(data);
       try {
-        const params = new URLSearchParams(cacheResponse.data);
-        const [kaizResponse] = await Promise.all([
-          axios.get(`${url}?${params.toString()}`)
-        ]);
+        const kaizResponse = await axios.get(`${url}?${params.toString()}`);
 
         if (kaizResponse.status === 200) {
           const resFromKaiz = kaizResponse.data;
@@ -125,46 +112,53 @@ app.get('/', async (req, res) => {
               response.status = true;
               response.message = 'Data retrieved successfully';
               response.result = match[1].trim().replace(/\s+/g, ' '); // Directly assign the roast
-              res.status(200).json(response);
+
+              // Save response to cache in .txt format
+              fs.writeFileSync(cacheFilePath, response.result);
+
+              // Schedule to delete the file after 5 seconds
+              setTimeout(() => {
+                if (fs.existsSync(cacheFilePath)) {
+                  fs.unlinkSync(cacheFilePath);
+                  console.log(`Cache file ${cacheFilePath} has been deleted.`);
+                }
+              }, 5000);
+
+              return res.status(200).json(response);
             } else {
               response.message = 'Failed to extract roasting text.';
               console.error('No roasting text found in response:', text);
-              res.status(422).json(response);
+              return res.status(422).json(response);
             }
           } else {
             response.message = 'Failed to get a response from the API.';
             console.error('API response error:', resFromKaiz);
-            res.status(422).json(response);
+            return res.status(422).json(response);
           }
         } else {
           response.message = 'Failed to connect to the API.';
           console.error('API HTTP error:', kaizResponse.status, kaizResponse.statusText);
-          res.status(500).json(response);
+          return res.status(500).json(response);
         }
       } catch (kaizError) {
         response.message = 'Error calling API.';
         console.error('Error calling API:', kaizError);
-        res.status(500).json(response);
+        return res.status(500).json(response);
       }
     } else {
       response.message = 'Username not found or an error occurred with the Instagram API.';
       if (user === null) {
         response.message = 'User not found or API error.';
       }
-      res.status(404).json(response);
+      return res.status(404).json(response);
     }
   } catch (error) {
     console.error("Error:", error);
     response.message = 'An internal error occurred.';
-    res.status(500).json(response);
+    return res.status(500).json(response);
   }
 });
 
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
 });
-
-// Ensure cache directory exists
-if (!fs.existsSync(cacheDir)) {
-  fs.mkdirSync(cacheDir);
-}
