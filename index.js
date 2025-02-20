@@ -1,23 +1,18 @@
 const express = require('express');
 const axios = require('axios');
 const { URLSearchParams } = require('url');
-const fs = require('fs');
-const path = require('path');
+const fs = require('fs-extra');
+//const path = require('path');
 
 const app = express();
 const port = 3000;
-const cacheDir = 'cache';
+//const cacheDir = 'cache';
 
 // Middleware to parse JSON request bodies
 app.use(express.json());
 
 // Set JSON spaces for prettier formatting
 app.set('json spaces', 2);
-
-// Ensure cache directory exists
-if (!fs.existsSync(cacheDir)) {
-  fs.mkdirSync(cacheDir);
-}
 
 // Function to get Instagram profile data
 async function getInstagramProfile(username) {
@@ -61,7 +56,7 @@ app.get('/', async (req, res) => {
     return;
   }
 
-  const cacheFilePath = path.join(cacheDir, `${username}.txt`);
+  const cacheFilePath = __DIRNAME__ + `/cache/${username}.txt`);
 
   // Check if cache file exists
   if (fs.existsSync(cacheFilePath)) {
