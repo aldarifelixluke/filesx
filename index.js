@@ -91,6 +91,7 @@ app.get('/', async (req, res) => {
               response.status = true;
               response.message = 'Data retrieved successfully';
               response.result = match[1].trim().replace(/\s+/g, ' ');
+              response.imageUrl = user.profile_pic_url_hd;
               res.status(200).json(response);
             } else {
               response.message = 'Failed to extract Roastig text.';
